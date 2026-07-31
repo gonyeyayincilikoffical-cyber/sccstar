@@ -1,0 +1,6 @@
+{
+  "name": "SCC STR - Futbol Kariyer & Maç Oyunu",
+  "description": "Score! Hero, Mini Soccer Star ve Superstar Soccer birleşimi gelişmiş futbol kariyer modu, sezgisel dokunmatik mermi/frikik oynanışı, oyuncu özelleştirme, transfer pazarı, turnuvalar, günlük ödüller ve yapay zeka spor yorumcusu.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
