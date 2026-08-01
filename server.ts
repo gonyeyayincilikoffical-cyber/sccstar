@@ -92,13 +92,18 @@ Lütfen sadece şu JSON formatında dön (başka açıklama yazma):
     const text = response.text;
     const parsed = JSON.parse(text || '{}');
     return res.json(parsed);
-  } catch (error) {
-    console.error('Error generating AI match report:', error);
-    return res.status(500).json({
-      headline: "SAHA KENARINDA HEYECAN: YILDIZ OYUNCU GELECEK VADEDİYOR!",
-      coachComment: "Oyuncumuzun potansiyeli çok yüksek, her maç üstüne koyarak ilerliyor.",
-      pressBody: "Oyuncunun sahadaki gayreti ve taraftarla uyumu dikkat çekti.",
-      fanSentiment: "MEMNUN"
+  } catch (error: any) {
+    console.warn('AI match report quota/fallback used:', error?.message || error);
+    const isGoal = req.body.goalsScored > 0 || req.body.result === 'win';
+    return res.status(200).json({
+      headline: isGoal
+        ? `${req.body.playerName?.toUpperCase() || 'YILDIZ'} SAHADA ŞOV YAPTI! ${req.body.currentClub || 'TAKIM'} ZAFERE UÇTU!`
+        : `${req.body.opponentName || 'RAKİP'} KARŞISINDA KIYASIYA MÜCADELE: ${req.body.playerName || 'YILDIZ'} PES ETMEDİ!`,
+      coachComment: isGoal
+        ? `"${req.body.playerName} bugün sahadaki klası ve kritik anlardaki soğukkanlılığıyla maça damga vurdu. Şut ve pas tercihleri muazzamdı."`
+        : `"${req.body.playerName} çok çabaladı, rakip savunmayı yıprattı. Önümüzdeki maçlarda onun golleriyle kazanacağız."`,
+      pressBody: `${req.body.nationality || 'Türk'} yıldız ${req.body.playerName}, ${req.body.matchType === 'national' ? 'Milli Takım' : req.body.currentClub} formasıyla sergilediği performansla tribünleri ayakta alkışlattı. ${req.body.rating || 8}/10 reyting aldı.`,
+      fanSentiment: isGoal ? "COŞKULU" : "MEMNUN"
     });
   }
 });
@@ -143,12 +148,12 @@ JSON formatı:
     });
 
     return res.json(JSON.parse(response.text || '{}'));
-  } catch (error) {
-    console.error('Error in transfer rumor AI:', error);
-    return res.json({
-      rumorHeadline: `${req.body.playerName} İÇİN TRANSFER DEDİKODULARI ARTIYOR!`,
-      scoutReport: "Sahadaki liderliği ve teknik becerisi dev kulüplerin dikkatini çekiyor.",
-      interestedLeague: "Şampiyonlar Ligi Takımları"
+  } catch (error: any) {
+    console.warn('AI transfer rumor quota/fallback used:', error?.message || error);
+    return res.status(200).json({
+      rumorHeadline: `${req.body.playerName || 'GENÇ YILDIZ'} İÇİN DEVLER LEAGUE ŞAMPİYONLARI SIRADA!`,
+      scoutReport: "Sahadaki liderliği, pas isabeti ve kritik şut gücü Avrupa'nın önde gelen scout ekipleri tarafından yakından takip ediliyor.",
+      interestedLeague: "Premier League & La Liga Devleri"
     });
   }
 });
@@ -160,23 +165,30 @@ app.get('/api/health', (req, res) => {
 
 // Vite middleware setup
 async function startServer() {
-  if (process.env.NODE_ENV !== 'production') {
-    const vite = await createViteServer({
-      server: { middlewareMode: true },
-      appType: 'spa',
-    });
-    app.use(vite.middlewares);
-  } else {
-    const distPath = path.join(process.cwd(), 'dist');
-    app.use(express.static(distPath));
-    app.get('*all', (req, res) => {
-      res.sendFile(path.join(distPath, 'index.html'));
-    });
-  }
+  try {
+    if (process.env.NODE_ENV !== 'production') {
+      const vite = await createViteServer({
+        server: {
+          middlewareMode: true,
+          hmr: process.env.DISABLE_HMR === 'true' ? false : undefined,
+        },
+        appType: 'spa',
+      });
+      app.use(vite.middlewares);
+    } else {
+      const distPath = path.join(process.cwd(), 'dist');
+      app.use(express.static(distPath));
+      app.get('*', (req, res) => {
+        res.sendFile(path.join(distPath, 'index.html'));
+      });
+    }
 
-  app.listen(PORT, '0.0.0.0', () => {
-    console.log(`SCC STR Server running on http://localhost:${PORT}`);
-  });
+    app.listen(PORT, '0.0.0.0', () => {
+      console.log(`SCC STR Server running on http://localhost:${PORT}`);
+    });
+  } catch (err) {
+    console.error('Failed to start server:', err);
+  }
 }
 
 startServer();

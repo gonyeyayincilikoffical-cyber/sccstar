@@ -72,7 +72,14 @@ export interface TransferOffer {
   status: 'pending' | 'accepted' | 'rejected';
 }
 
-export type ScenarioType = 'freekick' | 'penalty' | 'through_pass' | 'curved_shot' | 'one_on_one';
+export type ScenarioType =
+  | 'freekick'
+  | 'penalty'
+  | 'through_pass'
+  | 'curved_shot'
+  | 'one_on_one'
+  | 'pass_and_shoot'
+  | 'corner_header';
 
 export interface MatchScenario {
   id: string;
@@ -88,7 +95,11 @@ export interface MatchScenario {
   goalTarget: { xMin: number; xMax: number; y: number };
   goalkeeper: { x: number; y: number; agility: number };
   defenders: Array<{ x: number; y: number; radius: number }>;
-  teammateTarget?: { x: number; y: number }; // For through pass
+  teammateTarget?: { x: number; y: number; name?: string }; // For through pass / assist
+  secondStage?: {
+    ballStart: { x: number; y: number };
+    prompt: string;
+  };
 }
 
 export interface StoreItem {
